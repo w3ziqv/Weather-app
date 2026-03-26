@@ -56,12 +56,8 @@ Because this is a static site, you can run it in several ways:
 
 - No API key is required for the Open-Meteo endpoints used in this project.
 - Internet connection is required to fetch live weather and air quality data.
-- Default startup location is Warsaw (`lat: 52.23`, `lon: 21.01`).
+- Default startup location is Krakoów (`lat: 50.06`, `lon: 19.94`).
 
 ## Author
 
 - GitHub: [w3ziqv](https://github.com/w3ziqv)
-
-## License
-
-This project is open source. You can add a `LICENSE` file (for example MIT) if you want to define reuse terms explicitly.
