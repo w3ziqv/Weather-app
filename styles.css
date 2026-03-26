@@ -173,6 +173,18 @@ header .container {
   align-content: start;
   content-visibility: auto;
   contain-intrinsic-size: 760px;
+  position: relative;
+}
+
+.main-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  border-top: 1px solid var(--border);
+  pointer-events: none;
 }
 .main-grid > * {
   margin-top: -1px;
