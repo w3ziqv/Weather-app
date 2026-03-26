@@ -15,6 +15,13 @@ It fetches live weather, forecast, geocoding, and air quality data from Open-Met
 - 7-day forecast table
 - Air quality panel (European AQI)
 - Sunrise/sunset progress indicator
+- Component-style DOM rendering (without framework)
+- Loading skeleton to reduce layout shifts (better CLS)
+- Initial HTML skeleton (before JS execution) for stable first paint
+- Stable header control widths to reduce micro layout shifts
+- Better error handling with retry button
+- Basic accessibility improvements (ARIA/live status)
+- Settings persistence with localStorage (city, units, theme)
 - Responsive layout for desktop and mobile
 
 ## Tech Stack
@@ -48,7 +55,9 @@ Because this is a static site, you can run it in several ways:
 
 ```text
 .
+├── app.js
 ├── index.html
+├── styles.css
 └── README.md
 ```
 
@@ -56,7 +65,20 @@ Because this is a static site, you can run it in several ways:
 
 - No API key is required for the Open-Meteo endpoints used in this project.
 - Internet connection is required to fetch live weather and air quality data.
-- Default startup location is Krakoów (`lat: 50.06`, `lon: 19.94`).
+- Default startup location is Krakow (`lat: 50.06`, `lon: 19.94`).
+- Debug mode is available with `?debug=1`.
+
+## Debug Mode (Tests + Benchmark)
+
+You can run built-in debug checks directly in the browser console.
+
+1. Open the app with the `debug` query param, for example:
+   - `index.html?debug=1`
+2. Open DevTools Console.
+
+In debug mode the app runs:
+- lightweight self-tests for utility logic (unit conversion, AQI cap, sun progress bounds)
+- one render benchmark after the first successful data load (10 runs with avg/min/max)
 
 ## Author
 
