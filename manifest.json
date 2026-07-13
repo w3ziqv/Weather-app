@@ -1,0 +1,20 @@
+{
+  "name": "Weather App",
+  "short_name": "Pogoda",
+  "description": "Minimalist weather app with forecast, air quality, and Swiss-inspired design.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0066cc",
+  "lang": "pl",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

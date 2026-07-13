@@ -1,31 +1,34 @@
-// main.js — Application entry point, event listeners, autocomplete
+// main.ts — Application entry point, event listeners, autocomplete
 
 import { state, persistState, saveTheme, applySavedTheme } from './state.js';
-import { t } from './i18n.js';
+import { t, type Lang } from './i18n.js';
 import { toUnit, aqiPercent, sunProgress } from './utils.js';
-import { fetchAll, buildGeocodingUrl } from './api.js';
+import { fetchAll, buildGeocodingUrl, type GeocodingResult } from './api.js';
 import { showLoading, showError, render, announce, runRenderBenchmark } from './render.js';
 
 const DEBUG_MODE = new URLSearchParams(window.location.search).has('debug');
 
-const appEl = document.getElementById('app');
-const langBtn = document.getElementById('langBtn');
-const themeBtn = document.getElementById('themeBtn');
-const unitBtn = document.getElementById('unitBtn');
-const geoBtn = document.getElementById('geoBtn');
-const searchInput = document.getElementById('searchInput');
-const autocompleteEl = document.getElementById('autocomplete');
-const srStatus = document.getElementById('srStatus');
+const appEl = document.getElementById('app') as HTMLElement | null;
+const langBtn = document.getElementById('langBtn') as HTMLButtonElement | null;
+const themeBtn = document.getElementById('themeBtn') as HTMLButtonElement | null;
+const unitBtn = document.getElementById('unitBtn') as HTMLButtonElement | null;
+const geoBtn = document.getElementById('geoBtn') as HTMLButtonElement | null;
+const searchInput = document.getElementById('searchInput') as HTMLInputElement | null;
+const autocompleteEl = document.getElementById('autocomplete') as HTMLElement | null;
+const srStatus = document.getElementById('srStatus') as HTMLElement | null;
 
-let autocompleteResults = [];
+let autocompleteResults: GeocodingResult[] = [];
 let debugBenchDone = false;
 
-applySavedTheme(themeBtn);
+if (themeBtn) applySavedTheme(themeBtn);
 applyLanguageToStaticUi();
-unitBtn.textContent = '\u00B0' + state.unit;
-unitBtn.setAttribute('aria-pressed', String(state.unit === 'F'));
+if (unitBtn) {
+  unitBtn.textContent = '\u00B0' + state.unit;
+  unitBtn.setAttribute('aria-pressed', String(state.unit === 'F'));
+}
 
-function handleFetchAll() {
+function handleFetchAll(): void {
+  if (!appEl) return;
   showLoading(appEl);
 
   fetchAll(state)
@@ -41,8 +44,8 @@ function handleFetchAll() {
         }, 0);
       }
     })
-    .catch(error => {
-      if (error && error.name === 'AbortError') {
+    .catch((error: unknown) => {
+      if (error && typeof error === 'object' && 'name' in error && (error as { name: string }).name === 'AbortError') {
         showError(appEl, t('timeoutError', state.lang), true, handleFetchAll);
         return;
       }
@@ -56,7 +59,7 @@ function handleFetchAll() {
     });
 }
 
-function applyLanguageToStaticUi() {
+function applyLanguageToStaticUi(): void {
   const html = document.documentElement;
   html.lang = state.lang;
   document.title = t('appTitle', state.lang);
@@ -70,29 +73,35 @@ function applyLanguageToStaticUi() {
   const searchLabel = document.querySelector('label[for="searchInput"]');
   if (searchLabel) searchLabel.textContent = t('searchLabel', state.lang);
 
-  searchInput.placeholder = t('searchPlaceholder', state.lang);
-  searchInput.setAttribute('aria-label', t('searchLabel', state.lang));
-  autocompleteEl.setAttribute('aria-label', t('searchSuggestions', state.lang));
+  if (searchInput) {
+    searchInput.placeholder = t('searchPlaceholder', state.lang);
+    searchInput.setAttribute('aria-label', t('searchLabel', state.lang));
+  }
+  if (autocompleteEl) autocompleteEl.setAttribute('aria-label', t('searchSuggestions', state.lang));
 
-  langBtn.textContent = state.lang.toUpperCase();
-  langBtn.setAttribute('aria-label', t('languageSwitch', state.lang));
+  if (langBtn) {
+    langBtn.textContent = state.lang.toUpperCase();
+    langBtn.setAttribute('aria-label', t('languageSwitch', state.lang));
+  }
 
-  geoBtn.textContent = t('locationLabel', state.lang);
-  geoBtn.setAttribute('aria-label', t('locationAria', state.lang));
+  if (geoBtn) {
+    geoBtn.textContent = t('locationLabel', state.lang);
+    geoBtn.setAttribute('aria-label', t('locationAria', state.lang));
+  }
 
-  unitBtn.setAttribute('aria-label', t('unitAria', state.lang));
+  if (unitBtn) unitBtn.setAttribute('aria-label', t('unitAria', state.lang));
 
-  themeBtn.textContent = t('themeLabel', state.lang);
-  themeBtn.setAttribute('aria-label', t('themeAria', state.lang));
+  if (themeBtn) {
+    themeBtn.textContent = t('themeLabel', state.lang);
+    themeBtn.setAttribute('aria-label', t('themeAria', state.lang));
+  }
 
   const footerText = document.querySelector('.footer-text');
   if (footerText) footerText.textContent = t('footerText', state.lang);
 }
 
-// --- Event listeners ---
-
-langBtn.addEventListener('click', () => {
-  const prevLang = state.lang;
+langBtn?.addEventListener('click', () => {
+  const prevLang: Lang = state.lang;
   state.lang = state.lang === 'pl' ? 'en' : 'pl';
 
   if (state.cityName === t('myLocation', prevLang)) {
@@ -101,33 +110,36 @@ langBtn.addEventListener('click', () => {
 
   persistState(state);
   applyLanguageToStaticUi();
-  if (state.weather) {
-    render(appEl, srStatus);
-  } else {
-    showLoading(appEl);
+  if (appEl) {
+    if (state.weather) {
+      render(appEl, srStatus);
+    } else {
+      showLoading(appEl);
+    }
   }
 });
 
-themeBtn.addEventListener('click', () => {
+themeBtn?.addEventListener('click', () => {
   const html = document.documentElement;
   const current = html.getAttribute('data-theme') || 'light';
-  const next = current === 'light' ? 'dark' : 'light';
+  const next: 'light' | 'dark' = current === 'light' ? 'dark' : 'light';
   html.setAttribute('data-theme', next);
-  themeBtn.setAttribute('aria-pressed', String(next === 'dark'));
+  if (themeBtn) themeBtn.setAttribute('aria-pressed', String(next === 'dark'));
   saveTheme(next);
 });
 
-unitBtn.addEventListener('click', () => {
+unitBtn?.addEventListener('click', () => {
   state.unit = state.unit === 'C' ? 'F' : 'C';
   unitBtn.textContent = '\u00B0' + state.unit;
   unitBtn.setAttribute('aria-pressed', String(state.unit === 'F'));
   persistState(state);
-  if (state.weather) render(appEl, srStatus);
+  if (appEl && state.weather) render(appEl, srStatus);
 });
 
-geoBtn.addEventListener('click', () => {
+geoBtn?.addEventListener('click', () => {
+  if (!appEl) return;
   if (!navigator.geolocation) {
-    showError(appEl, t('browserNoGeo', state.lang), false);
+    showError(appEl, t('browserNoGeo', state.lang), false, () => {});
     return;
   }
 
@@ -145,24 +157,24 @@ geoBtn.addEventListener('click', () => {
     },
     () => {
       resetGeoButton();
-      showError(appEl, t('locationFetchFailed', state.lang), false);
+      if (appEl) showError(appEl, t('locationFetchFailed', state.lang), false, () => {});
     },
     { timeout: 10000 }
   );
 });
 
-function resetGeoButton() {
+function resetGeoButton(): void {
+  if (!geoBtn) return;
   geoBtn.textContent = t('locationLabel', state.lang);
   geoBtn.disabled = false;
 }
 
-// --- Autocomplete ---
-
-let searchTimeout = null;
+let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 let acIndex = -1;
 
-searchInput.addEventListener('input', () => {
-  clearTimeout(searchTimeout);
+searchInput?.addEventListener('input', () => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  if (!searchInput || !autocompleteEl) return;
   const q = searchInput.value.trim();
 
   if (q.length < 2) {
@@ -176,7 +188,7 @@ searchInput.addEventListener('input', () => {
     fetch(url)
       .then(r => {
         if (!r.ok) throw new Error('geocoding_failed');
-        return r.json();
+        return r.json() as Promise<{ results?: GeocodingResult[] }>;
       })
       .then(data => {
         if (!data.results || !data.results.length) {
@@ -207,8 +219,9 @@ searchInput.addEventListener('input', () => {
   }, 300);
 });
 
-autocompleteEl.addEventListener('click', e => {
-  const optionEl = e.target.closest('.autocomplete-item');
+autocompleteEl?.addEventListener('click', e => {
+  const target = e.target as HTMLElement;
+  const optionEl = target.closest('.autocomplete-item') as HTMLElement | null;
   if (!optionEl) return;
 
   const idx = Number(optionEl.dataset.index);
@@ -218,19 +231,21 @@ autocompleteEl.addEventListener('click', e => {
   state.lat = result.latitude;
   state.lon = result.longitude;
   state.cityName = result.name;
-  searchInput.value = '';
+  if (searchInput) searchInput.value = '';
   persistState(state);
   closeAutocomplete();
   handleFetchAll();
 });
 
 document.addEventListener('click', e => {
-  if (!autocompleteEl.contains(e.target) && e.target !== searchInput) {
+  if (!autocompleteEl || !searchInput) return;
+  if (!autocompleteEl.contains(e.target as Node) && e.target !== searchInput) {
     closeAutocomplete();
   }
 });
 
-searchInput.addEventListener('keydown', e => {
+searchInput?.addEventListener('keydown', e => {
+  if (!autocompleteEl) return;
   const items = autocompleteEl.querySelectorAll('.autocomplete-item');
   if (!items.length) return;
 
@@ -244,7 +259,8 @@ searchInput.addEventListener('keydown', e => {
     syncAutocompleteActive(items);
   } else if (e.key === 'Enter') {
     e.preventDefault();
-    if (acIndex >= 0 && items[acIndex]) items[acIndex].click();
+    const item = items[acIndex] as HTMLElement | undefined;
+    if (item) item.click();
   } else if (e.key === 'Escape') {
     closeAutocomplete();
   }
@@ -252,26 +268,28 @@ searchInput.addEventListener('keydown', e => {
 
 const acObserver = new MutationObserver(() => {
   acIndex = -1;
-  searchInput.removeAttribute('aria-activedescendant');
+  if (searchInput) searchInput.removeAttribute('aria-activedescendant');
 });
-acObserver.observe(autocompleteEl, { childList: true });
+if (autocompleteEl) acObserver.observe(autocompleteEl, { childList: true });
 
 window.addEventListener('beforeunload', () => {
   acObserver.disconnect();
 });
 
-function syncAutocompleteActive(items) {
+function syncAutocompleteActive(items: NodeListOf<Element>): void {
   items.forEach((it, i) => {
+    const el = it as HTMLElement;
     const isActive = i === acIndex;
-    it.classList.toggle('active', isActive);
-    it.setAttribute('aria-selected', String(isActive));
-    if (isActive) {
-      searchInput.setAttribute('aria-activedescendant', it.id);
+    el.classList.toggle('active', isActive);
+    el.setAttribute('aria-selected', String(isActive));
+    if (isActive && searchInput) {
+      searchInput.setAttribute('aria-activedescendant', el.id);
     }
   });
 }
 
-function closeAutocomplete() {
+function closeAutocomplete(): void {
+  if (!autocompleteEl || !searchInput) return;
   autocompleteEl.classList.remove('active');
   searchInput.setAttribute('aria-expanded', 'false');
   searchInput.removeAttribute('aria-activedescendant');
@@ -279,17 +297,22 @@ function closeAutocomplete() {
   acIndex = -1;
 }
 
-// --- Debug mode ---
+interface SelfTestResult {
+  name: string;
+  ok: boolean;
+  message?: string;
+}
 
-function runSelfTests() {
-  const results = [];
+function runSelfTests(): { passed: number; failed: number; total: number } {
+  const results: SelfTestResult[] = [];
 
-  function test(name, fn) {
+  function test(name: string, fn: () => void): void {
     try {
       fn();
       results.push({ name, ok: true });
     } catch (error) {
-      results.push({ name, ok: false, message: error && error.message ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      results.push({ name, ok: false, message });
     }
   }
 
@@ -332,7 +355,7 @@ function runSelfTests() {
     if (r.ok) {
       console.log('PASS - ' + r.name);
     } else {
-      console.error('FAIL - ' + r.name + ' - ' + r.message);
+      console.error('FAIL - ' + r.name + ' - ' + (r.message || ''));
     }
   });
   console.groupEnd();

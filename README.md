@@ -3,6 +3,18 @@
 A minimalist weather website built with HTML, CSS, and modular JavaScript (ES Modules).
 It fetches live weather, forecast, geocoding, and air quality data from Open-Meteo APIs and presents them in a clean Swiss-inspired layout.
 
+## Screenshots
+
+### Mobile
+
+<p align="center">
+  <img src="mobile.png" alt="Weather App on mobile" width="280">
+</p>
+
+### Live Demo
+
+[weather-app-five-taupe-24.vercel.app](https://weather-app-five-taupe-24.vercel.app/)
+
 ## Live Features
 
 - Current weather for the selected city
@@ -28,10 +40,11 @@ It fetches live weather, forecast, geocoding, and air quality data from Open-Met
 
 - HTML5
 - CSS3
-- JavaScript (ES Modules, no framework)
+- TypeScript (strict mode)
+- Vite (dev server + build)
 - Open-Meteo APIs
 - Vitest (unit testing)
-- GitHub Actions (CI)
+- GitHub Actions (CI: typecheck + test + build)
 
 ## API Endpoints Used
 
@@ -41,23 +54,27 @@ It fetches live weather, forecast, geocoding, and air quality data from Open-Met
 
 ## Run Locally
 
-This project uses ES Modules, so it must be served over HTTP (not opened directly via `file://`).
-
-### Option 1: Use VS Code Live Server (recommended)
-
-1. Install the Live Server extension in VS Code.
-2. Right-click `index.html`.
-3. Click **Open with Live Server**.
-
-### Option 2: Use any static server
+### Development server (recommended)
 
 ```bash
-npx serve .
-# or
-python -m http.server 8000
+npm install
+npm run dev
 ```
 
-Then open `http://localhost:8000` in your browser.
+Vite serves the app at `http://localhost:5173` with hot module replacement.
+
+### Production build
+
+```bash
+npm run build
+npm run preview
+```
+
+The built site is in `dist/` and can be deployed to any static host (Vercel, Netlify, GitHub Pages).
+
+### Option 3: VS Code Live Server
+
+You can still use Live Server on `index.html`, but the dev server (`npm run dev`) is recommended for TypeScript support.
 
 ## Tests
 
@@ -73,22 +90,24 @@ Tests cover the pure utility functions: unit conversion, AQI percentage/descript
 ```text
 .
 ├── src/
-│   ├── i18n.js        # Translation constants and t() helper
-│   ├── state.js       # Application state singleton, localStorage persistence
-│   ├── utils.js       # Pure utility functions (unit conversion, AQI, sun progress, formatting)
-│   ├── icons.js       # SVG icon generators and WMO weather code mapping
-│   ├── api.js         # Open-Meteo API client (fetch with timeout)
-│   ├── render.js      # DOM rendering functions (cards, chart, loading, error states)
-│   └── main.js        # Entry point: event listeners, autocomplete, debug mode
+│   ├── i18n.ts        # Translation constants and t() helper
+│   ├── state.ts       # Application state singleton, localStorage persistence
+│   ├── utils.ts       # Pure utility functions (unit conversion, AQI, sun progress, formatting)
+│   ├── icons.ts       # SVG icon generators and WMO weather code mapping
+│   ├── api.ts         # Open-Meteo API client (fetch with timeout)
+│   ├── render.ts      # DOM rendering functions (cards, chart, loading, error states)
+│   └── main.ts        # Entry point: event listeners, autocomplete, debug mode
 ├── tests/
-│   └── utils.test.js  # Vitest unit tests for pure utility functions
+│   └── utils.test.ts  # Vitest unit tests for pure utility functions
 ├── .github/
 │   └── workflows/
-│       └── ci.yml     # GitHub Actions: runs tests on push/PR
+│       └── ci.yml     # GitHub Actions: typecheck + test + build on push/PR
 ├── index.html
 ├── styles.css
+├── tsconfig.json
+├── vite.config.ts
+├── vitest.config.ts
 ├── package.json
-├── vitest.config.js
 └── README.md
 ```
 

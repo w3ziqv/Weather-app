@@ -1,42 +1,57 @@
-// render.js — DOM rendering functions
+// render.ts — DOM rendering functions
 
-import { state } from './state.js';
+import { state, type WeatherData } from './state.js';
 import { t } from './i18n.js';
 import { weatherInfo } from './icons.js';
 import {
-  toUnit, unitSymbol, aqiPercent, aqiDescription,
-  sunProgress, shortDay, getCurrentHourIndex,
-  formatHour, formatSunTime, escapeHtml
+  toUnit,
+  unitSymbol,
+  aqiPercent,
+  aqiDescription,
+  sunProgress,
+  shortDay,
+  getCurrentHourIndex,
+  formatHour,
+  formatSunTime,
+  escapeHtml,
 } from './utils.js';
 
 let hourlyScrollLeft = 0;
 
-export function setHourlyScrollLeft(val) {
+export function setHourlyScrollLeft(val: number): void {
   hourlyScrollLeft = val;
 }
 
-export function createEl(tagName, className, text) {
+function createEl<K extends keyof HTMLElementTagNameMap>(
+  tagName: K,
+  className?: string,
+  text?: string | number
+): HTMLElementTagNameMap[K] {
   const el = document.createElement(tagName);
   if (className) el.className = className;
   if (text != null) el.textContent = String(text);
   return el;
 }
 
-function createStatItem(label, value) {
+function createStatItem(label: string, value: string | number): HTMLDivElement {
   const item = createEl('div', 'stat-item');
   item.appendChild(createEl('div', 'label', label));
   item.appendChild(createEl('div', 'stat-value', value));
   return item;
 }
 
-function createWeatherIcon(className, iconFn) {
+function createWeatherIcon(className: string, iconFn: () => string): HTMLDivElement {
   const iconEl = createEl('div', className);
   iconEl.setAttribute('aria-hidden', 'true');
   iconEl.innerHTML = iconFn();
   return iconEl;
 }
 
-function createCurrentWeatherCard(cw, info, dateStr) {
+function createCurrentWeatherCard(
+  cw: WeatherData['current_weather'],
+  info: { desc: string; icon: () => string },
+  dateStr: string
+): HTMLDivElement {
   const card = createEl('div', 'card col-6 current-weather');
 
   const top = createEl('div');
@@ -55,7 +70,18 @@ function createCurrentWeatherCard(cw, info, dateStr) {
   return card;
 }
 
-function createStatsCard(data) {
+interface StatsCardData {
+  windSpeed: number;
+  humidity: number | string;
+  pressure: number | string;
+  uvIndex: number | string;
+  visibility: string;
+  cloudiness: string;
+  sunrise: string;
+  sunset: string;
+}
+
+function createStatsCard(data: StatsCardData): HTMLDivElement {
   const card = createEl('div', 'card col-6');
   card.appendChild(createEl('div', 'label', t('stats', state.lang)));
 
@@ -85,10 +111,12 @@ function createStatsCard(data) {
   sunTimes.appendChild(sunsetCol);
 
   const progressTrack = createEl('div', 'sun-progress-track');
-  progressTrack.appendChild(createEl('div', 'sun-progress-bar'));
-  progressTrack.lastChild.id = 'sunBar';
-  progressTrack.appendChild(createEl('div', 'sun-progress-dot'));
-  progressTrack.lastChild.id = 'sunDot';
+  const sunBar = createEl('div', 'sun-progress-bar');
+  sunBar.id = 'sunBar';
+  progressTrack.appendChild(sunBar);
+  const sunDot = createEl('div', 'sun-progress-dot');
+  sunDot.id = 'sunDot';
+  progressTrack.appendChild(sunDot);
 
   sunWrap.appendChild(sunTimes);
   sunWrap.appendChild(progressTrack);
@@ -97,7 +125,19 @@ function createStatsCard(data) {
   return card;
 }
 
-function createHourlySection(w, hourIdx) {
+function guessHourWeatherCode(w: WeatherData, idx: number): number {
+  if (!w.daily || !w.daily.weathercode) return 0;
+
+  const hourTime = new Date(w.hourly.time[idx]);
+  const dayIdx = w.daily.time.findIndex(d => {
+    const dd = new Date(d + 'T00:00:00');
+    return dd.toDateString() === hourTime.toDateString();
+  });
+
+  return dayIdx >= 0 ? w.daily.weathercode[dayIdx] : 0;
+}
+
+function createHourlySection(w: WeatherData, hourIdx: number): HTMLElement {
   const section = createEl('section', 'card col-12');
   section.setAttribute('aria-label', t('hourlyAria', state.lang));
   section.appendChild(createEl('div', 'label', t('hourly24h', state.lang)));
@@ -119,98 +159,22 @@ function createHourlySection(w, hourIdx) {
   }
 
   scroll.scrollLeft = hourlyScrollLeft;
-  scroll.addEventListener('scroll', () => {
-    hourlyScrollLeft = scroll.scrollLeft;
-  }, { passive: true });
+  scroll.addEventListener(
+    'scroll',
+    () => {
+      hourlyScrollLeft = scroll.scrollLeft;
+    },
+    { passive: true }
+  );
 
   section.appendChild(scroll);
   return section;
 }
 
-function createChartSection(w, hourIdx) {
-  const section = createEl('section', 'card col-12');
-  section.setAttribute('aria-label', t('tempChartAria', state.lang));
-  section.appendChild(createEl('div', 'label', t('tempChart24h', state.lang)));
-
-  const container = createEl('div', 'chart-container');
-  container.innerHTML = buildTempChart(w.hourly.time, w.hourly.temperature_2m, hourIdx);
-  section.appendChild(container);
-  return section;
-}
-
-function createForecastSection(w) {
-  const section = createEl('section', 'card col-8');
-  section.setAttribute('aria-label', t('forecast7dAria', state.lang));
-  section.appendChild(createEl('div', 'label', t('forecast7d', state.lang)));
-
-  const table = createEl('table', 'forecast-table');
-  const thead = createEl('thead');
-  const headRow = createEl('tr');
-
-  const headers = [t('day', state.lang), t('max', state.lang), t('min', state.lang), t('precipitation', state.lang)];
-  headers.forEach(header => {
-    const th = createEl('th', null, header);
-    th.scope = 'col';
-    headRow.appendChild(th);
-  });
-
-  const iconTh = createEl('th');
-  iconTh.scope = 'col';
-  iconTh.appendChild(createEl('span', 'visually-hidden', t('weatherIcon', state.lang)));
-  headRow.appendChild(iconTh);
-
-  thead.appendChild(headRow);
-  table.appendChild(thead);
-
-  const tbody = createEl('tbody');
-  for (let i = 0; i < w.daily.time.length; i++) {
-    const dInfo = weatherInfo(w.daily.weathercode[i], state.lang);
-    const dn = i === 0 ? t('today', state.lang) : shortDay(w.daily.time[i], state.lang);
-
-    const row = createEl('tr');
-    row.appendChild(createEl('td', 'day-name', dn));
-    row.appendChild(createEl('td', 'temp-max', toUnit(w.daily.temperature_2m_max[i], state.unit) + '\u00B0'));
-    row.appendChild(createEl('td', 'temp-min', toUnit(w.daily.temperature_2m_min[i], state.unit) + '\u00B0'));
-    row.appendChild(createEl('td', null, (w.daily.precipitation_sum[i] || 0) + ' mm'));
-
-    const iconCell = createEl('td');
-    iconCell.setAttribute('aria-hidden', 'true');
-    iconCell.innerHTML = dInfo.icon();
-    row.appendChild(iconCell);
-
-    tbody.appendChild(row);
-  }
-
-  table.appendChild(tbody);
-  section.appendChild(table);
-  return section;
-}
-
-function createAqiSection(aqiVal) {
-  const section = createEl('section', 'card col-4');
-  section.setAttribute('aria-label', t('airQualityAria', state.lang));
-
-  section.appendChild(createEl('div', 'label', t('airQuality', state.lang)));
-  section.appendChild(createEl('div', 'aqi-value', aqiVal));
-  section.appendChild(createEl('div', 'aqi-desc', typeof aqiVal === 'number' ? aqiDescription(aqiVal, state.lang) : t('noAqiData', state.lang)));
-
-  const barTrack = createEl('div', 'aqi-bar-track');
-  const barFill = createEl('div', 'aqi-bar-fill');
-  barFill.id = 'aqiBar';
-  barTrack.appendChild(barFill);
-  section.appendChild(barTrack);
-
-  const noteWrap = createEl('div', 'aqi-note');
-  noteWrap.appendChild(createEl('span', 'label', t('europeanAqi', state.lang)));
-  section.appendChild(noteWrap);
-
-  return section;
-}
-
-function buildTempChart(hourlyTimes, hourlyTemps, startIdx) {
+function buildTempChart(hourlyTimes: string[], hourlyTemps: number[], startIdx: number): string {
   const count = 24;
-  const temps = [];
-  const labels = [];
+  const temps: number[] = [];
+  const labels: string[] = [];
 
   for (let i = 0; i < count; i += 2) {
     const idx = startIdx + i;
@@ -243,7 +207,9 @@ function buildTempChart(hourlyTimes, hourlyTemps, startIdx) {
     .map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1))
     .join(' ');
 
-  let svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + t('tempChartSvgAria', state.lang) + '">';
+  let svg =
+    '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' +
+    t('tempChartSvgAria', state.lang) + '">';
 
   for (let i = 0; i <= 4; i++) {
     const y = padTop + (i / 4) * (h - padTop - padBot);
@@ -262,19 +228,89 @@ function buildTempChart(hourlyTimes, hourlyTemps, startIdx) {
   return svg;
 }
 
-function guessHourWeatherCode(w, idx) {
-  if (!w.daily || !w.daily.weathercode) return 0;
+function createChartSection(w: WeatherData, hourIdx: number): HTMLElement {
+  const section = createEl('section', 'card col-12');
+  section.setAttribute('aria-label', t('tempChartAria', state.lang));
+  section.appendChild(createEl('div', 'label', t('tempChart24h', state.lang)));
 
-  const hourTime = new Date(w.hourly.time[idx]);
-  const dayIdx = w.daily.time.findIndex(d => {
-    const dd = new Date(d + 'T00:00:00');
-    return dd.toDateString() === hourTime.toDateString();
-  });
-
-  return dayIdx >= 0 ? w.daily.weathercode[dayIdx] : 0;
+  const container = createEl('div', 'chart-container');
+  container.innerHTML = buildTempChart(w.hourly.time, w.hourly.temperature_2m, hourIdx);
+  section.appendChild(container);
+  return section;
 }
 
-export function showLoading(appEl) {
+function createForecastSection(w: WeatherData): HTMLElement {
+  const section = createEl('section', 'card col-8');
+  section.setAttribute('aria-label', t('forecast7dAria', state.lang));
+  section.appendChild(createEl('div', 'label', t('forecast7d', state.lang)));
+
+  const table = createEl('table', 'forecast-table');
+  const thead = createEl('thead');
+  const headRow = createEl('tr');
+
+  const headers: string[] = [t('day', state.lang), t('max', state.lang), t('min', state.lang), t('precipitation', state.lang)];
+  headers.forEach(header => {
+    const th = createEl('th', undefined, header);
+    th.scope = 'col';
+    headRow.appendChild(th);
+  });
+
+  const iconTh = createEl('th');
+  iconTh.scope = 'col';
+  iconTh.appendChild(createEl('span', 'visually-hidden', t('weatherIcon', state.lang)));
+  headRow.appendChild(iconTh);
+
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = createEl('tbody');
+  for (let i = 0; i < w.daily.time.length; i++) {
+    const dInfo = weatherInfo(w.daily.weathercode[i], state.lang);
+    const dn = i === 0 ? t('today', state.lang) : shortDay(w.daily.time[i], state.lang);
+
+    const row = createEl('tr');
+    row.appendChild(createEl('td', 'day-name', dn));
+    row.appendChild(createEl('td', 'temp-max', toUnit(w.daily.temperature_2m_max[i], state.unit) + '\u00B0'));
+    row.appendChild(createEl('td', 'temp-min', toUnit(w.daily.temperature_2m_min[i], state.unit) + '\u00B0'));
+    row.appendChild(createEl('td', undefined, (w.daily.precipitation_sum[i] || 0) + ' mm'));
+
+    const iconCell = createEl('td');
+    iconCell.setAttribute('aria-hidden', 'true');
+    iconCell.innerHTML = dInfo.icon();
+    row.appendChild(iconCell);
+
+    tbody.appendChild(row);
+  }
+
+  table.appendChild(tbody);
+  section.appendChild(table);
+  return section;
+}
+
+function createAqiSection(aqiVal: number | string): HTMLElement {
+  const section = createEl('section', 'card col-4');
+  section.setAttribute('aria-label', t('airQualityAria', state.lang));
+
+  section.appendChild(createEl('div', 'label', t('airQuality', state.lang)));
+  section.appendChild(createEl('div', 'aqi-value', aqiVal));
+  section.appendChild(
+    createEl('div', 'aqi-desc', typeof aqiVal === 'number' ? aqiDescription(aqiVal, state.lang) : t('noAqiData', state.lang))
+  );
+
+  const barTrack = createEl('div', 'aqi-bar-track');
+  const barFill = createEl('div', 'aqi-bar-fill');
+  barFill.id = 'aqiBar';
+  barTrack.appendChild(barFill);
+  section.appendChild(barTrack);
+
+  const noteWrap = createEl('div', 'aqi-note');
+  noteWrap.appendChild(createEl('span', 'label', t('europeanAqi', state.lang)));
+  section.appendChild(noteWrap);
+
+  return section;
+}
+
+export function showLoading(appEl: HTMLElement): void {
   const fragment = document.createDocumentFragment();
 
   const status = createEl('div', 'loading-text col-12', t('loadingData', state.lang));
@@ -282,58 +318,29 @@ export function showLoading(appEl) {
   status.setAttribute('aria-live', 'polite');
   fragment.appendChild(status);
 
-  const cardA = createEl('div', 'skeleton-card col-6 skeleton-h-280');
-  const rowA = createEl('div', 'skeleton-row');
-  rowA.appendChild(createEl('div', 'skeleton-line skeleton-line--md'));
-  rowA.appendChild(createEl('div', 'skeleton-line skeleton-line--lg'));
-  rowA.appendChild(createEl('div', 'skeleton-spacer-24'));
-  rowA.appendChild(createEl('div', 'skeleton-line'));
-  cardA.appendChild(rowA);
+  const skeletonSpec: Array<{ cls: string; h: string; lines: Array<{ cls: string }> }> = [
+    { cls: 'col-6 skeleton-h-280', h: '', lines: [{ cls: 'skeleton-line--md' }, { cls: 'skeleton-line--lg' }, { cls: 'skeleton-spacer-24' }, { cls: '' }] },
+    { cls: 'col-6 skeleton-h-280', h: '', lines: [{ cls: 'skeleton-line--md' }, { cls: '' }, { cls: '' }, { cls: '' }] },
+    { cls: 'col-12 skeleton-h-170', h: '', lines: [{ cls: 'skeleton-line--md' }, { cls: '' }] },
+    { cls: 'col-12 skeleton-h-210', h: '', lines: [{ cls: 'skeleton-line--md' }, { cls: '' }] },
+    { cls: 'col-8 skeleton-h-210', h: '', lines: [{ cls: 'skeleton-line--md' }, { cls: '' }, { cls: '' }] },
+    { cls: 'col-4 skeleton-h-210', h: '', lines: [{ cls: 'skeleton-line--md' }, { cls: 'skeleton-line--lg' }] },
+  ];
 
-  const cardB = createEl('div', 'skeleton-card col-6 skeleton-h-280');
-  const rowB = createEl('div', 'skeleton-row');
-  rowB.appendChild(createEl('div', 'skeleton-line skeleton-line--md'));
-  rowB.appendChild(createEl('div', 'skeleton-line'));
-  rowB.appendChild(createEl('div', 'skeleton-line'));
-  rowB.appendChild(createEl('div', 'skeleton-line'));
-  cardB.appendChild(rowB);
-
-  const cardC = createEl('div', 'skeleton-card col-12 skeleton-h-170');
-  const rowC = createEl('div', 'skeleton-row');
-  rowC.appendChild(createEl('div', 'skeleton-line skeleton-line--md'));
-  rowC.appendChild(createEl('div', 'skeleton-line'));
-  cardC.appendChild(rowC);
-
-  const cardD = createEl('div', 'skeleton-card col-12 skeleton-h-210');
-  const rowD = createEl('div', 'skeleton-row');
-  rowD.appendChild(createEl('div', 'skeleton-line skeleton-line--md'));
-  rowD.appendChild(createEl('div', 'skeleton-line'));
-  cardD.appendChild(rowD);
-
-  const cardE = createEl('div', 'skeleton-card col-8 skeleton-h-210');
-  const rowE = createEl('div', 'skeleton-row');
-  rowE.appendChild(createEl('div', 'skeleton-line skeleton-line--md'));
-  rowE.appendChild(createEl('div', 'skeleton-line'));
-  rowE.appendChild(createEl('div', 'skeleton-line'));
-  cardE.appendChild(rowE);
-
-  const cardF = createEl('div', 'skeleton-card col-4 skeleton-h-210');
-  const rowF = createEl('div', 'skeleton-row');
-  rowF.appendChild(createEl('div', 'skeleton-line skeleton-line--md'));
-  rowF.appendChild(createEl('div', 'skeleton-line skeleton-line--lg'));
-  cardF.appendChild(rowF);
-
-  fragment.appendChild(cardA);
-  fragment.appendChild(cardB);
-  fragment.appendChild(cardC);
-  fragment.appendChild(cardD);
-  fragment.appendChild(cardE);
-  fragment.appendChild(cardF);
+  for (const spec of skeletonSpec) {
+    const card = createEl('div', 'skeleton-card ' + spec.cls);
+    const row = createEl('div', 'skeleton-row');
+    for (const line of spec.lines) {
+      row.appendChild(createEl('div', 'skeleton-line ' + line.cls));
+    }
+    card.appendChild(row);
+    fragment.appendChild(card);
+  }
 
   appEl.replaceChildren(fragment);
 }
 
-export function showError(appEl, message, canRetry, onRetry) {
+export function showError(appEl: HTMLElement, message: string, canRetry: boolean, onRetry: () => void): void {
   let html = '<div class="card col-12 error-box" role="alert">';
   html += '<div class="label">' + t('errorTitle', state.lang) + '</div>';
   html += '<p class="error-message">' + escapeHtml(message) + '</p>';
@@ -345,7 +352,7 @@ export function showError(appEl, message, canRetry, onRetry) {
   appEl.innerHTML = html;
 
   if (canRetry) {
-    const retryBtn = document.getElementById('retryBtn');
+    const retryBtn = document.getElementById('retryBtn') as HTMLButtonElement | null;
     if (retryBtn) {
       retryBtn.addEventListener('click', onRetry);
       retryBtn.focus();
@@ -353,7 +360,7 @@ export function showError(appEl, message, canRetry, onRetry) {
   }
 }
 
-export function announce(srStatus, message) {
+export function announce(srStatus: HTMLElement | null, message: string): void {
   if (!srStatus) return;
   srStatus.textContent = '';
   requestAnimationFrame(() => {
@@ -361,24 +368,23 @@ export function announce(srStatus, message) {
   });
 }
 
-export function render(appEl, srStatus, options) {
-  const renderOptions = options || {};
-  const silent = renderOptions.silent === true;
+export function render(appEl: HTMLElement, srStatus: HTMLElement | null, options?: { silent?: boolean }): void {
+  const silent = options?.silent === true;
   const w = state.weather;
-  const a = state.aqi;
   if (!w) return;
 
   const cw = w.current_weather;
   const info = weatherInfo(cw.weathercode, state.lang);
   const hourIdx = getCurrentHourIndex(w.hourly.time);
 
-  const humidity = w.hourly.relativehumidity_2m ? w.hourly.relativehumidity_2m[hourIdx] : '--';
-  const uvIndex = w.hourly.uv_index ? w.hourly.uv_index[hourIdx] : '--';
-  const visibility = w.hourly.visibility ? (w.hourly.visibility[hourIdx] / 1000).toFixed(1) : '--';
-  const pressure = w.hourly.surface_pressure ? Math.round(w.hourly.surface_pressure[hourIdx]) : '--';
+  const humidity: number | string = w.hourly.relativehumidity_2m ? w.hourly.relativehumidity_2m[hourIdx] : '--';
+  const uvIndex: number | string = w.hourly.uv_index ? w.hourly.uv_index[hourIdx] : '--';
+  const visibility: string = w.hourly.visibility ? (w.hourly.visibility[hourIdx] / 1000).toFixed(1) : '--';
+  const pressure: number | string = w.hourly.surface_pressure ? Math.round(w.hourly.surface_pressure[hourIdx]) : '--';
   const windSpeed = cw.windspeed;
 
-  let aqiVal = '--';
+  let aqiVal: number | string = '--';
+  const a = state.aqi;
   if (a && a.current && a.current.european_aqi != null) {
     aqiVal = a.current.european_aqi;
   } else if (a && a.hourly && a.hourly.european_aqi) {
@@ -396,21 +402,23 @@ export function render(appEl, srStatus, options) {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: 'numeric'
+    year: 'numeric',
   });
 
   const fragment = document.createDocumentFragment();
   fragment.appendChild(createCurrentWeatherCard(cw, info, dateStr));
-  fragment.appendChild(createStatsCard({
-    windSpeed,
-    humidity,
-    pressure,
-    uvIndex,
-    visibility,
-    cloudiness: info.desc,
-    sunrise,
-    sunset
-  }));
+  fragment.appendChild(
+    createStatsCard({
+      windSpeed,
+      humidity,
+      pressure,
+      uvIndex,
+      visibility,
+      cloudiness: info.desc,
+      sunrise,
+      sunset,
+    })
+  );
   fragment.appendChild(createHourlySection(w, hourIdx));
   fragment.appendChild(createChartSection(w, hourIdx));
   fragment.appendChild(createForecastSection(w));
@@ -419,11 +427,11 @@ export function render(appEl, srStatus, options) {
   appEl.replaceChildren(fragment);
 
   requestAnimationFrame(() => {
-    const sunBar = document.getElementById('sunBar');
-    const sunDot = document.getElementById('sunDot');
+    const sunBar = document.getElementById('sunBar') as HTMLElement | null;
+    const sunDot = document.getElementById('sunDot') as HTMLElement | null;
     if (sunBar) sunBar.style.width = sunProg + '%';
     if (sunDot) sunDot.style.left = sunProg + '%';
-    const aqiBar = document.getElementById('aqiBar');
+    const aqiBar = document.getElementById('aqiBar') as HTMLElement | null;
     if (aqiBar) aqiBar.style.width = aqiPercent(aqiNum) + '%';
   });
 
@@ -432,9 +440,14 @@ export function render(appEl, srStatus, options) {
   }
 }
 
-export function runRenderBenchmark(appEl, srStatus, iterations) {
-  const count = Number.isInteger(iterations) && iterations > 0 ? iterations : 8;
-  const times = [];
+export function runRenderBenchmark(appEl: HTMLElement, srStatus: HTMLElement | null, iterations?: number): {
+  avg: number;
+  min: number;
+  max: number;
+  times: number[];
+} {
+  const count = Number.isInteger(iterations) && (iterations as number) > 0 ? (iterations as number) : 8;
+  const times: number[] = [];
 
   for (let i = 0; i < count; i++) {
     const start = performance.now();

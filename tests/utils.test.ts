@@ -1,3 +1,5 @@
+// tests/utils.test.ts — Vitest unit tests for pure utility functions
+
 import { describe, it, expect } from 'vitest';
 import {
   toUnit,
@@ -8,7 +10,7 @@ import {
   shortDay,
   getCurrentHourIndex,
   formatHour,
-  formatSunTime
+  formatSunTime,
 } from '../src/utils.js';
 
 describe('toUnit', () => {

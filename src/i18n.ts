@@ -1,6 +1,28 @@
-// i18n.js — Internationalisation constants and translation helper
+// i18n.ts — Internationalisation constants and translation helper
 
-export const I18N = {
+export type Lang = 'pl' | 'en';
+
+export type I18nKey =
+  | 'appTitle' | 'logo' | 'controlsNav' | 'searchLabel' | 'searchPlaceholder'
+  | 'searchSuggestions' | 'languageSwitch' | 'locationLabel' | 'locationAria'
+  | 'unitAria' | 'themeLabel' | 'themeAria' | 'loadingData' | 'loadingWeather'
+  | 'browserNoGeo' | 'locationFetchFailed' | 'searchResultsReady' | 'errorTitle'
+  | 'retry' | 'errorFetch' | 'timeoutError' | 'offlineError' | 'weatherFetchFailed'
+  | 'myLocation' | 'weatherUpdated' | 'stats' | 'wind' | 'humidity' | 'pressure'
+  | 'uv' | 'visibility' | 'cloudiness' | 'sunriseSunset' | 'sunrise' | 'sunset'
+  | 'hourly24h' | 'hourlyAria' | 'tempChart24h' | 'tempChartAria' | 'tempChartSvgAria'
+  | 'forecast7d' | 'forecast7dAria' | 'day' | 'max' | 'min' | 'precipitation'
+  | 'weatherIcon' | 'today' | 'airQuality' | 'airQualityAria' | 'noAqiData'
+  | 'europeanAqi' | 'footerText' | 'aqiVeryGood' | 'aqiGood' | 'aqiModerate'
+  | 'aqiBad' | 'aqiVeryBad' | 'aqiHazardous' | 'wmoUnknown' | 'wmo0' | 'wmo1'
+  | 'wmo2' | 'wmo3' | 'wmo45' | 'wmo48' | 'wmo51' | 'wmo53' | 'wmo55' | 'wmo56'
+  | 'wmo57' | 'wmo61' | 'wmo63' | 'wmo65' | 'wmo66' | 'wmo67' | 'wmo71' | 'wmo73'
+  | 'wmo75' | 'wmo77' | 'wmo80' | 'wmo81' | 'wmo82' | 'wmo85' | 'wmo86' | 'wmo95'
+  | 'wmo96' | 'wmo99';
+
+type I18nTable = Record<I18nKey, string>;
+
+export const I18N: Record<Lang, I18nTable> = {
   pl: {
     appTitle: 'Pogoda | Prognoza i AQI',
     logo: 'Pogoda',
@@ -183,17 +205,9 @@ export const I18N = {
   }
 };
 
-/**
- * Translate a key for the given language.
- * Falls back to Polish, then to the raw key.
- * @param {string} key - translation key
- * @param {'pl'|'en'} lang - current language
- * @param {Record<string, string|number>} [vars] - interpolation variables
- * @returns {string}
- */
-export function t(key, lang, vars) {
+export function t(key: I18nKey, lang: Lang, vars?: Record<string, string | number>): string {
   const table = I18N[lang] || I18N.pl;
-  let value = table[key] || I18N.pl[key] || key;
+  let value: string = table[key] || I18N.pl[key] || key;
 
   if (vars) {
     for (const name of Object.keys(vars)) {
