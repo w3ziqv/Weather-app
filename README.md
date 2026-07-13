@@ -1,6 +1,6 @@
 # Weather App (Swiss Design)
 
-A minimalist weather website built with pure HTML, CSS, and JavaScript.
+A minimalist weather website built with HTML, CSS, and modular JavaScript (ES Modules).
 It fetches live weather, forecast, geocoding, and air quality data from Open-Meteo APIs and presents them in a clean Swiss-inspired layout.
 
 ## Live Features
@@ -28,8 +28,10 @@ It fetches live weather, forecast, geocoding, and air quality data from Open-Met
 
 - HTML5
 - CSS3
-- Vanilla JavaScript (no framework)
+- JavaScript (ES Modules, no framework)
 - Open-Meteo APIs
+- Vitest (unit testing)
+- GitHub Actions (CI)
 
 ## API Endpoints Used
 
@@ -39,25 +41,54 @@ It fetches live weather, forecast, geocoding, and air quality data from Open-Met
 
 ## Run Locally
 
-Because this is a static site, you can run it in several ways:
+This project uses ES Modules, so it must be served over HTTP (not opened directly via `file://`).
 
-### Option 1: Open directly
-
-1. Open `index.html` in your browser.
-
-### Option 2: Use VS Code Live Server (recommended)
+### Option 1: Use VS Code Live Server (recommended)
 
 1. Install the Live Server extension in VS Code.
 2. Right-click `index.html`.
 3. Click **Open with Live Server**.
 
+### Option 2: Use any static server
+
+```bash
+npx serve .
+# or
+python -m http.server 8000
+```
+
+Then open `http://localhost:8000` in your browser.
+
+## Tests
+
+```bash
+npm install
+npm test
+```
+
+Tests cover the pure utility functions: unit conversion, AQI percentage/description, sun progress, date/time formatting, and hour index calculation.
+
 ## Project Structure
 
 ```text
 .
-├── app.js
+├── src/
+│   ├── i18n.js        # Translation constants and t() helper
+│   ├── state.js       # Application state singleton, localStorage persistence
+│   ├── utils.js       # Pure utility functions (unit conversion, AQI, sun progress, formatting)
+│   ├── icons.js       # SVG icon generators and WMO weather code mapping
+│   ├── api.js         # Open-Meteo API client (fetch with timeout)
+│   ├── render.js      # DOM rendering functions (cards, chart, loading, error states)
+│   └── main.js        # Entry point: event listeners, autocomplete, debug mode
+├── tests/
+│   └── utils.test.js  # Vitest unit tests for pure utility functions
+├── .github/
+│   └── workflows/
+│       └── ci.yml     # GitHub Actions: runs tests on push/PR
 ├── index.html
 ├── styles.css
+├── package.json
+├── vitest.config.js
 └── README.md
 ```
 

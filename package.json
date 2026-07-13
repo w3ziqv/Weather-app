@@ -1,0 +1,16 @@
+{
+  "name": "weather-app",
+  "version": "1.0.0",
+  "description": "Minimalist weather website with live data, forecast, air quality, and geolocation. Swiss-inspired design.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.0"
+  },
+  "license": "MIT",
+  "author": "Mateusz Szostak"
+}
