@@ -21,7 +21,8 @@ export type I18nKey =
   | 'wmo96' | 'wmo99' | 'radarLabel' | 'radarAria' | 'radarTitle' | 'radarLoading'
   | 'radarError' | 'radarLegendTitle' | 'radarPlay' | 'radarPause' | 'radarPrev'
   | 'radarNext' | 'radarPrevAria' | 'radarNextAria' | 'radarSliderAria'
-  | 'radarLegendLight' | 'radarLegendHeavy';
+  | 'radarLegendLight' | 'radarLegendHeavy' | 'radarFullscreen'
+  | 'radarExitFullscreen' | 'radarFullscreenAria';
 
 type I18nTable = Record<I18nKey, string>;
 
@@ -129,7 +130,10 @@ export const I18N: Record<Lang, I18nTable> = {
     radarNextAria: 'Nastepna klatka radaru',
     radarSliderAria: 'Zmien klatke radaru',
     radarLegendLight: 'Lekki deszcz',
-    radarLegendHeavy: 'Silny deszcz'
+    radarLegendHeavy: 'Silny deszcz',
+    radarFullscreen: 'Pelny ekran',
+    radarExitFullscreen: 'Zamknij pelny ekran',
+    radarFullscreenAria: 'Przelacz tryb pelnego ekranu'
   },
   en: {
     appTitle: 'Weather | Forecast and AQI',
@@ -234,7 +238,10 @@ export const I18N: Record<Lang, I18nTable> = {
     radarNextAria: 'Next radar frame',
     radarSliderAria: 'Change radar frame',
     radarLegendLight: 'Light rain',
-    radarLegendHeavy: 'Heavy rain'
+    radarLegendHeavy: 'Heavy rain',
+    radarFullscreen: 'Fullscreen',
+    radarExitFullscreen: 'Exit fullscreen',
+    radarFullscreenAria: 'Toggle fullscreen mode'
   }
 };
 

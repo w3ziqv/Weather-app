@@ -100,9 +100,19 @@
     <div class="card radar-card">
       <div class="radar-head">
         <div class="label" id="radarTitle">Mapa opadow</div>
-        <div class="radar-frame-label" id="radarFrameLabel"></div>
+        <div class="radar-head-actions">
+          <div class="radar-frame-label" id="radarFrameLabel"></div>
+          <button class="btn radar-fullscreen-btn" id="radarFullscreenBtn" type="button" aria-label="Przelacz tryb pelnego ekranu" aria-pressed="false">
+            <svg class="radar-fs-icon radar-fs-icon--expand" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+              <path d="M1 6V1h5M15 6V1h-5M1 10v5h5M15 10v5h-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            </svg>
+            <svg class="radar-fs-icon radar-fs-icon--compress" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false" hidden>
+              <path d="M6 1v5H1M10 1v5h5M6 15v-5H1M10 15v-5h5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+            </svg>
+          </button>
+        </div>
       </div>
-      <div id="radarMap" class="radar-map" role="application" aria-label="Mapa opadow">
+      <div id="radarMap" class="radar-map" role="region" aria-label="Mapa opadow">
         <div id="radarStatus" class="radar-status" role="status" aria-live="polite"></div>
       </div>
       <div class="radar-controls">

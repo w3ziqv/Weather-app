@@ -98,6 +98,16 @@ export function parseRadarFrames(data: unknown): RadarFrame[] {
   return frames;
 }
 
+/**
+ * Returns the next frame index in a cyclic sequence, wrapping in either
+ * direction. `dir` is +1 for forward, -1 for backward. Returns 0 for an
+ * empty frame set.
+ */
+export function nextFrameIndex(current: number, total: number, dir: 1 | -1): number {
+  if (total <= 0) return 0;
+  return (((current + dir) % total) + total) % total;
+}
+
 /** Formats a UNIX timestamp (seconds) as local HH:MM. */
 export function formatRadarTime(unixSeconds: number): string {
   const d = new Date(unixSeconds * 1000);
