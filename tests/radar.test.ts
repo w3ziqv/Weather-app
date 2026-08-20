@@ -5,6 +5,7 @@ import {
   buildRadarTileUrl,
   parseRadarFrames,
   formatRadarTime,
+  nextFrameIndex,
   TILE_SIZE,
   TILE_COLOR,
   TILE_OPTIONS,
@@ -100,6 +101,25 @@ describe('parseRadarFrames', () => {
       },
     });
     expect(frames.map(f => f.time)).toEqual([100]);
+  });
+});
+
+describe('nextFrameIndex', () => {
+  it('advances forward and wraps to the start', () => {
+    expect(nextFrameIndex(0, 4, 1)).toBe(1);
+    expect(nextFrameIndex(3, 4, 1)).toBe(0);
+  });
+
+  it('steps backward and wraps to the end', () => {
+    expect(nextFrameIndex(3, 4, -1)).toBe(2);
+    expect(nextFrameIndex(0, 4, -1)).toBe(3);
+  });
+
+  it('handles a single frame and an empty frame set', () => {
+    expect(nextFrameIndex(0, 1, 1)).toBe(0);
+    expect(nextFrameIndex(0, 1, -1)).toBe(0);
+    expect(nextFrameIndex(0, 0, 1)).toBe(0);
+    expect(nextFrameIndex(0, 0, -1)).toBe(0);
   });
 });
 
