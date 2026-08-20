@@ -18,7 +18,10 @@ export type I18nKey =
   | 'wmo2' | 'wmo3' | 'wmo45' | 'wmo48' | 'wmo51' | 'wmo53' | 'wmo55' | 'wmo56'
   | 'wmo57' | 'wmo61' | 'wmo63' | 'wmo65' | 'wmo66' | 'wmo67' | 'wmo71' | 'wmo73'
   | 'wmo75' | 'wmo77' | 'wmo80' | 'wmo81' | 'wmo82' | 'wmo85' | 'wmo86' | 'wmo95'
-  | 'wmo96' | 'wmo99';
+  | 'wmo96' | 'wmo99' | 'radarLabel' | 'radarAria' | 'radarTitle' | 'radarLoading'
+  | 'radarError' | 'radarLegendTitle' | 'radarPlay' | 'radarPause' | 'radarPrev'
+  | 'radarNext' | 'radarPrevAria' | 'radarNextAria' | 'radarSliderAria'
+  | 'radarLegendLight' | 'radarLegendHeavy';
 
 type I18nTable = Record<I18nKey, string>;
 
@@ -111,7 +114,22 @@ export const I18N: Record<Lang, I18nTable> = {
     wmo86: 'Silne opady sniegu',
     wmo95: 'Burza',
     wmo96: 'Burza z gradem',
-    wmo99: 'Burza z silnym gradem'
+    wmo99: 'Burza z silnym gradem',
+    radarLabel: 'Radar',
+    radarAria: 'Przelacz widok mapy opadow',
+    radarTitle: 'Mapa opadow',
+    radarLoading: 'Ladowanie mapy opadow...',
+    radarError: 'Nie udalo sie pobrac danych radarowych. Sprobuj ponownie.',
+    radarLegendTitle: 'Legenda opadow',
+    radarPlay: 'Odtwarzaj',
+    radarPause: 'Pauza',
+    radarPrev: 'Wstecz',
+    radarNext: 'Dalej',
+    radarPrevAria: 'Poprzednia klatka radaru',
+    radarNextAria: 'Nastepna klatka radaru',
+    radarSliderAria: 'Zmien klatke radaru',
+    radarLegendLight: 'Lekki deszcz',
+    radarLegendHeavy: 'Silny deszcz'
   },
   en: {
     appTitle: 'Weather | Forecast and AQI',
@@ -201,7 +219,22 @@ export const I18N: Record<Lang, I18nTable> = {
     wmo86: 'Heavy snow showers',
     wmo95: 'Thunderstorm',
     wmo96: 'Thunderstorm with hail',
-    wmo99: 'Severe hailstorm'
+    wmo99: 'Severe hailstorm',
+    radarLabel: 'Radar',
+    radarAria: 'Toggle precipitation map view',
+    radarTitle: 'Precipitation map',
+    radarLoading: 'Loading precipitation map...',
+    radarError: 'Could not load radar data. Try again.',
+    radarLegendTitle: 'Precipitation legend',
+    radarPlay: 'Play',
+    radarPause: 'Pause',
+    radarPrev: 'Prev',
+    radarNext: 'Next',
+    radarPrevAria: 'Previous radar frame',
+    radarNextAria: 'Next radar frame',
+    radarSliderAria: 'Change radar frame',
+    radarLegendLight: 'Light rain',
+    radarLegendHeavy: 'Heavy rain'
   }
 };
 
