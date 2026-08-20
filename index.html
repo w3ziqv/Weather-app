@@ -38,6 +38,7 @@
       <button class="btn" id="langBtn" type="button" aria-label="Przelacz jezyk">PL</button>
       <button class="btn" id="geoBtn" type="button" aria-label="Uzyj mojej lokalizacji">Lokalizacja</button>
       <button class="btn" id="unitBtn" type="button" aria-label="Przelacz jednostki temperatury" aria-pressed="false">&deg;C</button>
+      <button class="btn" id="radarBtn" type="button" aria-label="Przelacz widok mapy opadow" aria-pressed="false" aria-expanded="false">Radar</button>
       <button class="btn btn--filled" id="themeBtn" type="button" aria-label="Przelacz motyw jasny i ciemny" aria-pressed="false">Motyw</button>
     </nav>
   </div>
@@ -94,6 +95,29 @@
       </div>
     </div>
   </div>
+
+  <section class="radar-panel" id="viewMap" hidden>
+    <div class="card radar-card">
+      <div class="radar-head">
+        <div class="label" id="radarTitle">Mapa opadow</div>
+        <div class="radar-frame-label" id="radarFrameLabel"></div>
+      </div>
+      <div id="radarMap" class="radar-map" role="application" aria-label="Mapa opadow">
+        <div id="radarStatus" class="radar-status" role="status" aria-live="polite"></div>
+      </div>
+      <div class="radar-controls">
+        <button class="btn" id="radarPrevBtn" type="button" aria-label="Poprzednia klatka radaru">Wstecz</button>
+        <button class="btn" id="radarPlayBtn" type="button">Odtwarzaj</button>
+        <button class="btn" id="radarNextBtn" type="button" aria-label="Nastepna klatka radaru">Dalej</button>
+        <input type="range" id="radarSlider" class="radar-slider" min="0" max="0" value="0" step="1" aria-label="Zmien klatke radaru">
+      </div>
+      <div class="radar-legend" id="radarLegend" aria-label="Legenda opadow">
+        <span class="radar-legend-label" id="radarLegendLight">Lekki deszcz</span>
+        <div class="radar-legend-bar" aria-hidden="true"></div>
+        <span class="radar-legend-label" id="radarLegendHeavy">Silny deszcz</span>
+      </div>
+    </div>
+  </section>
 </main>
 
 <div id="srStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>

@@ -5,6 +5,13 @@ import { t, type Lang } from './i18n.js';
 import { toUnit, aqiPercent, sunProgress } from './utils.js';
 import { fetchAll, buildGeocodingUrl, type GeocodingResult } from './api.js';
 import { showLoading, showError, render, announce, runRenderBenchmark } from './render.js';
+import {
+  initRadarModule,
+  openRadarMap,
+  closeRadarMap,
+  recenterRadarMap,
+  applyRadarI18n,
+} from './radar-view.js';
 
 const DEBUG_MODE = new URLSearchParams(window.location.search).has('debug');
 
@@ -13,6 +20,8 @@ const langBtn = document.getElementById('langBtn') as HTMLButtonElement | null;
 const themeBtn = document.getElementById('themeBtn') as HTMLButtonElement | null;
 const unitBtn = document.getElementById('unitBtn') as HTMLButtonElement | null;
 const geoBtn = document.getElementById('geoBtn') as HTMLButtonElement | null;
+const radarBtn = document.getElementById('radarBtn') as HTMLButtonElement | null;
+const viewMap = document.getElementById('viewMap') as HTMLElement | null;
 const searchInput = document.getElementById('searchInput') as HTMLInputElement | null;
 const autocompleteEl = document.getElementById('autocomplete') as HTMLElement | null;
 const srStatus = document.getElementById('srStatus') as HTMLElement | null;
@@ -96,6 +105,13 @@ function applyLanguageToStaticUi(): void {
     themeBtn.setAttribute('aria-label', t('themeAria', state.lang));
   }
 
+  if (radarBtn) {
+    radarBtn.textContent = t('radarLabel', state.lang);
+    radarBtn.setAttribute('aria-label', t('radarAria', state.lang));
+  }
+
+  applyRadarI18n();
+
   const footerText = document.querySelector('.footer-text');
   if (footerText) footerText.textContent = t('footerText', state.lang);
 }
@@ -154,6 +170,7 @@ geoBtn?.addEventListener('click', () => {
       persistState(state);
       resetGeoButton();
       handleFetchAll();
+      recenterRadarMap();
     },
     () => {
       resetGeoButton();
@@ -168,6 +185,21 @@ function resetGeoButton(): void {
   geoBtn.textContent = t('locationLabel', state.lang);
   geoBtn.disabled = false;
 }
+
+radarBtn?.addEventListener('click', () => {
+  if (!viewMap) return;
+  const opening = viewMap.hidden;
+  viewMap.hidden = !opening;
+  if (radarBtn) {
+    radarBtn.setAttribute('aria-pressed', String(opening));
+    radarBtn.setAttribute('aria-expanded', String(opening));
+  }
+  if (opening) {
+    void openRadarMap();
+  } else {
+    closeRadarMap();
+  }
+});
 
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 let acIndex = -1;
@@ -235,6 +267,7 @@ autocompleteEl?.addEventListener('click', e => {
   persistState(state);
   closeAutocomplete();
   handleFetchAll();
+  recenterRadarMap();
 });
 
 document.addEventListener('click', e => {
@@ -367,4 +400,5 @@ if (DEBUG_MODE) {
   runSelfTests();
 }
 
+initRadarModule();
 handleFetchAll();
